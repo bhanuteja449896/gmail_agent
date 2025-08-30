@@ -1,0 +1,19 @@
+# Sensitive credentials and tokens
+credentials.json
+token.json
+
+# Environment variables
+.env
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv/
+.ENV/
+
+# IDE and editor files
+.vscode/
+
+# Docker
+.dockerignore
