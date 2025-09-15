@@ -1,6 +1,7 @@
 # Sensitive credentials and tokens
 credentials.json
 token.json
+service-account.json
 
 # Environment variables
 .env
