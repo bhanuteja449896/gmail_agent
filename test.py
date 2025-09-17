@@ -1,10 +1,8 @@
 from services import (send_email, 
     draft_email, 
     reply_to_email,
-    smart_reply_to_mail,
     search_emails, 
     draft_email, 
-    smart_reply_to_mail,
     search_emails
     # forward_email,
     # reply_to_email,

@@ -1,0 +1,25 @@
+# Gmail MCP Agent Requirements
+fastmcp>=2.11.3
+pydantic>=2.0.0
+
+# Google APIs
+google-api-python-client>=2.0.0
+google-auth>=2.17.0
+google-auth-oauthlib>=1.0.0
+google-auth-httplib2>=0.2.0
+google-cloud-firestore>=2.11.0
+
+# AI Integration
+langchain-google-genai>=1.0.0
+
+# PDF Processing (optional)
+PyPDF2>=3.0.0
+PyMuPDF>=1.23.0
+pdfplumber>=0.10.0
+
+# Scheduling
+schedule>=1.2.0
+pytz>=2023.3
+
+# Environment
+python-dotenv>=1.0.0
