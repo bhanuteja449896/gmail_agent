@@ -1,0 +1,133 @@
+name: Code Quality Dashboard
+
+on:
+  push:
+    branches: [ main ]
+  schedule:
+    - cron: '0 6 * * 0'  # Weekly on Sunday
+
+jobs:
+  quality-metrics:
+    name: Quality Metrics
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install radon complexitymetrics pylint_json2html
+
+      - name: Calculate code complexity
+        run: |
+          radon cc src/ -a -nb > complexity-report.txt
+          radon mi src/ -nb > maintainability-report.txt
+
+      - name: Generate metrics
+        run: |
+          python -c "
+          import os
+          import json
+          
+          metrics = {
+              'timestamp': '$(date -u +%Y-%m-%dT%H:%M:%SZ)',
+              'python_files': len([f for f in os.walk('src') for file in f[2] if file.endswith('.py')]),
+              'test_files': len([f for f in os.walk('tests') for file in f[2] if file.endswith('.py')]),
+          }
+          
+          with open('metrics.json', 'w') as f:
+              json.dump(metrics, f, indent=2)
+          "
+
+      - name: Upload metrics
+        uses: actions/upload-artifact@v3
+        with:
+          name: quality-metrics
+          path: |
+            complexity-report.txt
+            maintainability-report.txt
+            metrics.json
+
+  dependency-check:
+    name: Dependency Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Check dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pipdeptree
+          pipdeptree > dependencies.txt
+          pip list --format=json > dependencies.json
+
+      - name: Upload dependencies
+        uses: actions/upload-artifact@v3
+        with:
+          name: dependencies
+          path: |
+            dependencies.txt
+            dependencies.json
+
+  codeowners-check:
+    name: CODEOWNERS Validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Validate CODEOWNERS
+        run: |
+          if [ -f .github/CODEOWNERS ]; then
+            echo "CODEOWNERS file exists"
+            cat .github/CODEOWNERS
+          else
+            echo "No CODEOWNERS file found"
+          fi
+
+  repository-info:
+    name: Repository Info
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Gather repository statistics
+        run: |
+          echo "Repository Statistics" > repo-stats.txt
+          echo "=====================" >> repo-stats.txt
+          echo "" >> repo-stats.txt
+          echo "Total commits: $(git rev-list --count HEAD)" >> repo-stats.txt
+          echo "Total branches: $(git branch -a | wc -l)" >> repo-stats.txt
+          echo "Total tags: $(git tag | wc -l)" >> repo-stats.txt
+          echo "First commit: $(git log --diff-filter=A --follow --format=%aI -- . | tail -1)" >> repo-stats.txt
+          echo "Last commit: $(git log -1 --format=%aI)" >> repo-stats.txt
+          echo "" >> repo-stats.txt
+          echo "Python files: $(find . -name '*.py' -type f | grep -v __pycache__ | wc -l)" >> repo-stats.txt
+          echo "Test files: $(find tests -name 'test_*.py' -type f 2>/dev/null | wc -l)" >> repo-stats.txt
+          echo "Total lines of code: $(find . -name '*.py' -type f -exec wc -l {} + | tail -1 | awk '{print $1}')" >> repo-stats.txt
+
+      - name: Upload statistics
+        uses: actions/upload-artifact@v3
+        with:
+          name: repository-statistics
+          path: repo-stats.txt
